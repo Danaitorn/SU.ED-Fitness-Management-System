@@ -1,0 +1,140 @@
+/* ================= SECTION ================= */
+.schedule-section {
+  padding: 2rem;
+  background-color: #fffaf5; /* ส้มอ่อนมาก */
+}
+
+/* ================= TABLE ================= */
+.schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+}
+
+/* ================= HEADER ================= */
+.schedule-table thead th {
+  padding: 0.9rem;
+  background-color: #fb923c; /* ส้มกลาง */
+  color: #ffffff;
+  font-weight: 500;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+/* ================= DAY COLUMN ================= */
+.schedule-table tbody td:first-child {
+  background-color: #fed7aa; /* ส้มอ่อน */
+  color: #7c2d12;
+  font-weight: 600;
+  text-align: center;
+  vertical-align: middle;
+  width: 130px;
+}
+
+/* ================= TABLE CELL ================= */
+.schedule-table td {
+  padding: 0.9rem;
+  text-align: center;
+  border: 1px solid #f3f4f6;
+  font-size: 0.85rem;
+  transition: background-color 0.2s ease;
+}
+
+/* hover แถว */
+.schedule-table tbody tr:hover td:not(:first-child) {
+  background-color: #fff7ed;
+}
+
+/* ================= EMPTY SLOT ================= */
+.schedule-table td:empty {
+  background-color: #fafafa;
+}
+
+/* ================= CLASS TYPE COLORS ================= */
+
+/* Cardio – Soft Blue */
+.schedule-table td.cardio {
+  background-color: #eff6ff;
+  color: #1e40af;
+  font-weight: 500;
+  border-radius: 6px;
+}
+
+/* Strength – Soft Red */
+.schedule-table td.strength {
+  background-color: #fef2f2;
+  color: #991b1b;
+  font-weight: 500;
+  border-radius: 6px;
+}
+
+/* Flexibility – Soft Green */
+.schedule-table td.flexibility {
+  background-color: #f0fdf4;
+  color: #166534;
+  font-weight: 500;
+  border-radius: 6px;
+}
+
+/* Hover class */
+.schedule-table td.cardio:hover,
+.schedule-table td.strength:hover,
+.schedule-table td.flexibility:hover {
+  transform: scale(1.02);
+  cursor: pointer;
+}
+
+/* ================= GUIDE ================= */
+.schedule-guide .card {
+  border-radius: 14px;
+  border: 1px solid #f3f4f6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.schedule-guide h5 {
+  font-weight: 600;
+  color: #ea580c;
+}
+
+/* ================= BUTTON ================= */
+
+.btn-success {
+  background-color: #fb923c !important;
+  border: none !important;
+}
+
+.btn-success:hover {
+  background-color: #f97316 !important;
+}
+
+.btn-warning {
+  background-color: #fed7aa !important;
+  border: none !important;
+  color: #7c2d12 !important;
+}
+
+.btn-danger {
+  background-color: #fca5a5 !important;
+  border: none !important;
+  color: #7f1d1d !important;
+}
+
+/* Remove strong shadow */
+.schedule-table .btn {
+  box-shadow: none !important;
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+  .schedule-table td,
+  .schedule-table th {
+    padding: 0.6rem;
+    font-size: 0.75rem;
+  }
+}

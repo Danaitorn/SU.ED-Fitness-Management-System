@@ -1,0 +1,115 @@
+import React, { useEffect, useState } from "react";
+import { Container, Row, Col, Card, Button } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
+import "./package.css";
+
+const Packages = () => {
+  const [packages, setPackages] = useState({});
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetch("http://localhost:8080/api/v1/packages")
+      .then((res) => res.json())
+      .then((data) => {
+        // จัดกลุ่ม packages ตาม duration และ user_type
+        const grouped = {};
+        data.forEach((pkg) => {
+          if (!grouped[pkg.duration]) grouped[pkg.duration] = {};
+          grouped[pkg.duration][pkg.user_type] = {
+            price: pkg.price,
+            package_id: pkg.package_id, // ✅ เพิ่ม package_id
+          };
+        });
+        setPackages(grouped);
+      })
+      .catch((err) => console.error("Error fetching packages:", err));
+  }, []);
+
+  const durations = [
+    { key: "1", label: "รายเดือน" },
+    { key: "4", label: "4 เดือน" },
+  ];
+
+  const userTypes = [
+    { key: "student", label: "นักเรียน/นักศึกษา" },
+    { key: "university_staff", label: "บุคลากรในมหาวิทยาลัย" },
+    { key: "external", label: "บุคคลภายนอก" },
+  ];
+
+  // ส่งข้อมูลไปหน้า Membership.jsx
+  const handleSubscribe = (durationLabel, userTypeLabel, packageData) => {
+    navigate("/membership", {
+      state: {
+        duration: durationLabel,
+        userType: userTypeLabel,
+        price: packageData.price,
+        package_id: packageData.package_id, // ✅ ส่ง package_id ด้วย
+      },
+    });
+  };
+
+  return (
+    <div style={{ background: "#f8f9fa", minHeight: "100vh", padding: "80px 0" }}>
+      <Container>
+        <div className="header-section text-center mb-4">
+          <h2>💳 สมาชิกสำหรับทุกคน</h2>
+          <p>เลือกแพ็กเกจที่เหมาะกับคุณ</p>
+        </div>
+
+        {durations.map((duration) => (
+          <div key={duration.key} className="mb-5">
+            <h3 className="fw-bold text-center mb-4">{duration.label}</h3>
+            <Row className="justify-content-center">
+              {userTypes.map((type) => {
+                const pkg = packages[duration.key]?.[type.key];
+                return (
+                  <Col key={type.key} xs={12} md={6} lg={4} className="mb-4">
+                    <Card className="shadow-lg border-0 rounded-4 h-100 card-hover">
+                      <div
+                        style={{
+                          background: "#ff4500",
+                          height: "120px",
+                          borderTopLeftRadius: "1rem",
+                          borderTopRightRadius: "1rem",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <h2 className="text-white fw-bold m-0">{type.label}</h2>
+                      </div>
+
+                      <Card.Body className="text-center d-flex flex-column justify-content-between">
+                        <div>
+                          <Card.Title className="fw-bold fs-4 text-dark">
+                            {pkg ? `${pkg.price} บาท` : "-"}
+                          </Card.Title>
+                          <Card.Text className="text-muted fs-6">
+                            ราคาเริ่มต้น / {duration.label}
+                          </Card.Text>
+                        </div>
+
+                        <Button
+                          variant="danger"
+                          className="rounded-pill px-4 py-2 fw-bold mt-3"
+                          disabled={!pkg}
+                          onClick={() =>
+                            handleSubscribe(duration.label, type.label, pkg)
+                          }
+                        >
+                          สมัครเลย
+                        </Button>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                );
+              })}
+            </Row>
+          </div>
+        ))}
+      </Container>
+    </div>
+  );
+};
+
+export default Packages;

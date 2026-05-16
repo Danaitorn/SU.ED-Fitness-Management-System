@@ -1,0 +1,442 @@
+import React, { useEffect, useState } from 'react';
+import './DashBoard.css';
+import { Container, Row, Col, Card, Spinner } from 'react-bootstrap';
+import {
+  PieChart, Pie, Cell, Legend, Tooltip,
+  BarChart, Bar,
+  LineChart, Line,
+  XAxis, YAxis, CartesianGrid, ResponsiveContainer
+} from 'recharts';
+import 'bootstrap-icons/font/bootstrap-icons.css';
+import Cookies from 'js-cookie';
+
+const COLORS = ['#FF7F11', '#FDBA74', '#60A5FA', '#34D399', '#C084FC'];
+
+const DashBoard = () => {
+
+  const [loading, setLoading] = useState(true);
+
+  const [summary, setSummary] = useState({
+    totalUsers: 0,
+    todayVisits: 0
+  });
+  const token = Cookies.get("token");
+  const [userByType, setUserByType] = useState([]);
+  const [members, setMembers] = useState([]);
+  const [visits, setVisits] = useState([]);
+  const [logs, setLogs] = useState([]);
+  const [recentVisits, setRecentVisits] = useState([]);
+  const [visitSearch, setVisitSearch] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+
+  const [memberType, setMemberType] = useState("monthly");
+  const [visitType, setVisitType] = useState("monthly");
+
+
+  // ======================
+  // โหลด Summary
+  // ======================
+  useEffect(() => {
+    fetch('http://localhost:8080/api/v1/admin/dashboard-summary', {
+      headers: {
+      Authorization: `Bearer ${token}`
+    },
+      credentials: "include"
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log("Summary:", data);
+        setSummary(data || {});
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Summary Error:", err);
+        setLoading(false);
+      });
+  }, [token]);
+
+  // ======================
+  // โหลด User Type
+  // ======================
+  useEffect(() => {
+    fetch('http://localhost:8080/api/v1/admin/user-type', {
+       headers: {
+      Authorization: `Bearer ${token}`
+    },
+      credentials: "include"
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log("UserType:", data);
+        setUserByType(data.data || []);
+      });
+  }, [token]);
+
+  // ======================
+  // โหลด Member Stats
+  // ======================
+  useEffect(() => {
+    fetch(`http://localhost:8080/api/v1/admin/dashboard/members?type=${memberType}`, {
+       headers: {
+      Authorization: `Bearer ${token}`
+    },
+      credentials: "include"
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log("Members:", data);
+
+        const formatted = (data.data || []).map(item => ({
+          period: item.period?.split("T")[0], // ตัดเวลาออก
+          total: item.total
+        }));
+
+        setMembers(formatted);
+      });
+  }, [memberType, token]);
+
+  // ======================
+  // โหลด Visit Stats
+  // ======================
+  useEffect(() => {
+    fetch(`http://localhost:8080/api/v1/admin/dashboard/visits?type=${visitType}`, {
+       headers: {
+      Authorization: `Bearer ${token}`
+    },
+      credentials: "include"
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log("Visits:", data);
+
+        const formatted = (data.data || []).map(item => {
+          const date = new Date(item.period);
+          return {
+            period: date.toLocaleDateString("th-TH"),
+            total: item.total
+          };
+        });
+
+        setVisits(formatted);
+      });
+  }, [visitType, token]);
+  // ======================
+  // โหลด Recent Visits
+  // ======================
+  useEffect(() => {
+    fetch("http://localhost:8080/api/v1/admin/visits?limit=10", {
+       headers: {
+      Authorization: `Bearer ${token}`
+    },
+      credentials: "include"
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log("Recent Visits:", data);
+        setRecentVisits(data.data || []);
+      });
+  }, [token]);
+
+  // ======================
+  // โหลด Logs
+  // ======================
+  useEffect(() => {
+    fetch('http://localhost:8080/api/v1/admin/logs?limit=10', {
+       headers: {
+      Authorization: `Bearer ${token}`
+    },
+      credentials: "include"
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log("Logs:", data);
+        setLogs(data.data || []);
+      });
+  }, [token]);
+
+  if (loading) {
+    return (
+      <div className="text-center my-5">
+        <Spinner animation="border" variant="warning" />
+        <p>กำลังโหลด Dashboard...</p>
+      </div>
+    );
+  }
+
+  return (
+    <Container className="py-5">
+
+      <Row className="mb-4">
+        <Col>
+          <h2 style={{ color: '#FF7F11' }} className="fw-bold">
+            <i className="bi bi-bar-chart-line me-2"></i>
+            Fitness Dashboard
+          </h2>
+          <p className="text-muted mb-0">
+            SU.ED FITNESS CENTER<br />
+            วันที่จัดทำรายงาน: {new Date().toLocaleDateString('th-TH')}
+          </p>
+        </Col>
+      </Row>
+
+      {/* SUMMARY */}
+      <Row className="mb-4">
+        <Col md={6}>
+          <Card className="p-4 shadow border-warning">
+            <h6>ผู้ใช้งานทั้งหมด</h6>
+            <h2>{summary.totalUsers}</h2>
+          </Card>
+        </Col>
+
+        <Col md={6}>
+          <Card className="p-4 shadow border-warning">
+            <h6>เข้าใช้วันนี้</h6>
+            <h2>{summary.todayVisits}</h2>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* USER TYPE */}
+      <Row className="mb-4">
+        <Col md={6}>
+          <Card className="p-4 shadow border-warning">
+            <h6 className="text-center mb-3">ผู้ใช้แยกตามประเภท</h6>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie data={userByType} dataKey="value" nameKey="name" outerRadius={100} label>
+                  {userByType.map((_, index) => (
+                    <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </Card>
+        </Col>
+
+        {/* MEMBERS */}
+        <Col md={6}>
+          <Card className="p-4 shadow border-warning">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h6 className="mb-0">สมัครสมาชิก ({memberType})</h6>
+
+              <select
+                className="form-select w-auto"
+                value={memberType}
+                onChange={(e) => setMemberType(e.target.value)}
+              >
+                <option value="daily">รายวัน</option>
+                <option value="monthly">รายเดือน</option>
+                <option value="yearly">รายปี</option>
+              </select>
+            </div>
+
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={members}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="period" />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Bar dataKey="total" fill="#FF7F11" />
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* VISITS */}
+      <Row className="mb-4">
+        <Col>
+          <Card className="p-4 shadow border-warning">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h6 className="mb-0">การเข้าใช้งาน ({visitType})</h6>
+
+              <select
+                className="form-select w-auto"
+                value={visitType}
+                onChange={(e) => setVisitType(e.target.value)}
+              >
+                <option value="daily">รายวัน</option>
+                <option value="monthly">รายเดือน</option>
+                <option value="yearly">รายปี</option>
+              </select>
+            </div>
+
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={visits}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="period" />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Line type="monotone" dataKey="total" stroke="#FF7F11" strokeWidth={3} />
+              </LineChart>
+            </ResponsiveContainer>
+          </Card>
+        </Col>
+      </Row>
+      {/* VISIT TABLE */}
+      <Row className="mt-5">
+        <Col>
+          <div className="row mb-3">
+            <div className="col-md-4">
+              <input
+                type="text"
+                className="form-control"
+                placeholder="ค้นหา Membership No หรือ ชื่อ..."
+                value={visitSearch}
+                onChange={(e) => setVisitSearch(e.target.value)}
+              />
+            </div>
+
+            <div className="col-md-3">
+              <input
+                type="date"
+                className="form-control"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </div>
+
+            <div className="col-md-2">
+              <button
+                className="btn btn-secondary w-100"
+                onClick={() => {
+                  setVisitSearch("");
+                  setStartDate("");
+                  setEndDate("");
+                }}
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+          <Card className="shadow-sm">
+            <Card.Body>
+              <h6 className="fw-bold mb-3">🏋️‍♂️ การเข้าใช้ Fitness (ล่าสุด)</h6>
+
+              {recentVisits.length === 0 ? (
+                <p className="text-muted text-center mb-0">ยังไม่มีข้อมูลการเข้าใช้</p>
+              ) : (
+                <div className="table-responsive">
+                  <table className="table table-sm table-hover align-middle">
+                    <thead className="table-light">
+                      <tr>
+                        <th>เวลา</th>
+                        <th>Membership No</th>
+                        <th>ชื่อสมาชิก</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(() => {
+                        const filteredVisits = recentVisits.filter((visit) => {
+
+                          const membershipNo = visit.Membership?.membership_no?.toLowerCase() || "";
+                          const fullName = visit.Membership?.user?.full_name?.toLowerCase() || "";
+                          const visitDate = visit.visit_date?.split("T")[0];
+
+                          const searchMatch =
+                            membershipNo.includes(visitSearch.toLowerCase()) ||
+                            fullName.includes(visitSearch.toLowerCase());
+
+                          let dateMatch = true;
+
+                          if (startDate && endDate) {
+                            dateMatch = visitDate >= startDate && visitDate <= endDate;
+                          }
+
+                          return searchMatch && dateMatch;
+                        });
+
+                        return (
+                          <>
+                            <p className="text-muted">
+                              แสดง {filteredVisits.length} รายการ
+                            </p>
+
+                            {filteredVisits.map((visit) => (
+                              <tr key={visit.ID}>
+                                <td>{visit.visit_date?.replace('T', ' ').split('.')[0]}</td>
+                                <td>{visit.Membership?.membership_no}</td>
+                                <td>{visit.Membership?.user?.full_name}</td>
+                                <td>
+                                  <span className="badge bg-success">
+                                    Checked-in
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </>
+                        );
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+      {/* LOG TABLE */}
+      <Row className="mt-5">
+        <Col>
+          <Card className="shadow-sm">
+            <Card.Body>
+              <h6 className="fw-bold mb-3">🧾 ประวัติการใช้งานระบบ (ล่าสุด)</h6>
+
+              {logs.length === 0 ? (
+                <p className="text-muted text-center mb-0">ยังไม่มี log</p>
+              ) : (
+                <div className="table-responsive">
+                  <table className="table table-sm table-hover align-middle">
+                    <thead className="table-light">
+                      <tr>
+                        <th>เวลา</th>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>Action</th>
+                        <th>รายละเอียด</th>
+                        <th>IP</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {logs.map(log => (
+                        <tr key={log.log_id}>
+                          <td>{log.created_at?.replace('T', ' ').split('.')[0]}</td>
+                          <td>{log.username || 'guest'}</td>
+                          <td>
+                            <span className={`badge bg-${log.role === 'admin' ? 'danger' : 'primary'}`}>
+                              {log.role}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`badge ${log.action === 'delete' ? 'bg-danger' :
+                              log.action === 'update' ? 'bg-warning text-dark' :
+                                log.action === 'create' ? 'bg-success' :
+                                  'bg-secondary'
+                              }`}>
+                              {log.action}
+                            </span>
+                          </td>
+                          <td>{log.description}</td>
+                          <td>{log.ip_address}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+
+    </Container>
+  );
+};
+
+export default DashBoard;
